@@ -1,3 +1,11 @@
+% Particle in a 1D Infinite Potential Well
+% ---------------------------------------
+% This script numerically solves the time-independent Schrödinger equation
+% for a particle confined in a 1D infinite potential well using a finite-
+% difference method. Energy eigenvalues and eigenstates are computed and
+% compared to analytic solutions.
+
+%Set Up
 L = 1e-9;
 N = 1000;
 n_show = 5;
@@ -6,20 +14,27 @@ n_show = 5;
 hbar = 1.054e-34; % joules
 m    = 9.109e-31; % kilograms
 
-% grid and spacing
+% Spatial Grid
+% Discretize the domain [0, L] into N evenly spaced points
  x = linspace(0,L,N).';
 dx = x(2) - x(1);
 
-% matrix for second derivative 
+% Second Derivative Operator
+% Construct finite-difference approximation of d^2/dx^2
+% using a tridiagonal matrix
 main = -2 * ones(N,1);
 off  = 1 * ones (N-1,1);
 D2   = (diag(main)+diag(off, +1) + diag(off, -1)) /dx^2;
 
+%Apply infinite well boundary conditions
+% Enforce psi(0) = psi(L) = 0 by solving only on interior points
 D2i = D2 (2:end-1, 2:end-1);
 xi  = x(2:end-1);
 
+% H = -(hbar^2 / 2m) * d^2/dx^2 for V(x) = 0 inside the well
 H = -(hbar^2)/(2*m) * D2i;
 
+% Solve H psi = E psi
 [vecs, vals] = eig(full(H));
 [E_all, idx] = sort(diag(vals), 'ascend');
 psi_i        = vecs(:, idx);
@@ -29,6 +44,7 @@ E = E_all(1:n_show);
 psi = psi_i(:, 1:n_show);
 
 % Normalization
+% Ensure integral |psi|^2 dx = 1
 psi_full = zeros(N, n_show);
 for k = 1:n_show
     normk = sqrt(trapz(xi, abs(psi(:,k)).^2));
@@ -66,3 +82,4 @@ xlabel('x (nm)'); ylabel('|{\psi}|^2 (offset) & Energy (eV)');
 title('Lowest eigenstates (|{\psi}|^2 curves are vertically offset by their E_n)');
 legend(arrayfun(@(k) sprintf('n=%d (%.3f eV)', k, E_eV(k)), 1:n_show, 'uni', 0), ...
        'Location','bestoutside');
+
